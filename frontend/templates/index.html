@@ -1,0 +1,168 @@
+{% extends "base.html" %} {% block title %}Home - Blockchain Notary{% endblock
+%} {% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center py-5 bg-gradient">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <i class="fas fa-shield-alt hero-icon mb-4"></i>
+        <h1 class="display-4 fw-bold mb-4">Blockchain Document Notarization</h1>
+        <p class="lead mb-5">
+          Secure, transparent, and immutable proof of document existence using
+          blockchain technology. Notarize your documents with cryptographic
+          certainty.
+        </p>
+        <div class="d-grid gap-3 d-sm-flex justify-content-center">
+          <a href="/notarize" class="btn btn-primary btn-lg px-4">
+            <i class="fas fa-stamp"></i> Notarize Document
+          </a>
+          <a href="/verify" class="btn btn-outline-primary btn-lg px-4">
+            <i class="fas fa-check-circle"></i> Verify Document
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+  <div class="container">
+    <h2 class="text-center mb-5">How It Works</h2>
+    <div class="row g-4">
+      <!-- Feature 1 -->
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="fas fa-upload fa-3x text-primary"></i>
+            </div>
+            <h5 class="card-title">1. Upload Document</h5>
+            <p class="card-text text-muted">
+              Select any file you want to notarize. The file never leaves your
+              device - only its hash is computed.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="fas fa-fingerprint fa-3x text-success"></i>
+            </div>
+            <h5 class="card-title">2. Generate Hash</h5>
+            <p class="card-text text-muted">
+              A unique SHA-256 cryptographic hash is created as a digital
+              fingerprint of your document.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="fas fa-cube fa-3x text-warning"></i>
+            </div>
+            <h5 class="card-title">3. Store on Blockchain</h5>
+            <p class="card-text text-muted">
+              The hash is permanently stored on the blockchain with a timestamp,
+              creating immutable proof.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <h2 class="text-center mb-5">Why Use Blockchain Notarization?</h2>
+    <div class="row g-4">
+      <div class="col-md-3 col-sm-6">
+        <div class="benefit-card text-center">
+          <i class="fas fa-lock fa-2x text-primary mb-3"></i>
+          <h6>Immutable</h6>
+          <p class="text-muted small">
+            Once stored, records cannot be altered or deleted
+          </p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="benefit-card text-center">
+          <i class="fas fa-clock fa-2x text-success mb-3"></i>
+          <h6>Timestamped</h6>
+          <p class="text-muted small">
+            Exact time of notarization is permanently recorded
+          </p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="benefit-card text-center">
+          <i class="fas fa-eye fa-2x text-info mb-3"></i>
+          <h6>Transparent</h6>
+          <p class="text-muted small">
+            Anyone can verify documents independently
+          </p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="benefit-card text-center">
+          <i class="fas fa-shield-alt fa-2x text-warning mb-3"></i>
+          <h6>Secure</h6>
+          <p class="text-muted small">
+            Cryptographic security ensures data integrity
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tech Stack Section -->
+<section class="py-5">
+  <div class="container">
+    <h2 class="text-center mb-5">Technology Stack</h2>
+    <div class="row justify-content-center text-center">
+      <div class="col-md-2 col-sm-4 mb-4">
+        <i class="fab fa-ethereum fa-3x mb-2"></i>
+        <p class="small">Ethereum</p>
+      </div>
+      <div class="col-md-2 col-sm-4 mb-4">
+        <i class="fab fa-python fa-3x mb-2"></i>
+        <p class="small">Python/Flask</p>
+      </div>
+      <div class="col-md-2 col-sm-4 mb-4">
+        <i class="fas fa-file-code fa-3x mb-2"></i>
+        <p class="small">Solidity</p>
+      </div>
+      <div class="col-md-2 col-sm-4 mb-4">
+        <i class="fab fa-js fa-3x mb-2"></i>
+        <p class="small">Web3.js</p>
+      </div>
+      <div class="col-md-2 col-sm-4 mb-4">
+        <i class="fas fa-wallet fa-3x mb-2"></i>
+        <p class="small">MetaMask</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+  <div class="container text-center">
+    <h2 class="mb-4">Ready to Get Started?</h2>
+    <p class="lead mb-4">Protect your documents with the power of blockchain</p>
+    <a href="/notarize" class="btn btn-light btn-lg">
+      <i class="fas fa-stamp"></i> Notarize Your First Document
+    </a>
+  </div>
+</section>
+{% endblock %}

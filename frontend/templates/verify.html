@@ -1,0 +1,225 @@
+{% extends "base.html" %} {% block title %}Verify Document - Blockchain Notary{%
+endblock %} {% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Page Header -->
+      <div class="text-center mb-5">
+        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+        <h1 class="display-5 fw-bold">Verify Document</h1>
+        <p class="lead text-muted">
+          Check if a document has been notarized on the blockchain
+        </p>
+      </div>
+
+      <!-- Alert Messages -->
+      <div id="alertContainer"></div>
+
+      <!-- Verification Method Tabs -->
+      <ul class="nav nav-tabs mb-4" id="verifyTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active"
+            id="file-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#file"
+            type="button"
+            role="tab"
+          >
+            <i class="fas fa-file-upload"></i> Upload File
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="hash-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#hash"
+            type="button"
+            role="tab"
+          >
+            <i class="fas fa-fingerprint"></i> Enter Hash
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="verifyTabContent">
+        <!-- File Upload Tab -->
+        <div class="tab-pane fade show active" id="file" role="tabpanel">
+          <div class="card shadow-lg border-0">
+            <div class="card-body p-5">
+              <form id="verifyFileForm">
+                <div class="mb-4">
+                  <label for="verifyFileInput" class="form-label fw-bold">
+                    <i class="fas fa-file-upload"></i> Select Document to Verify
+                  </label>
+                  <input
+                    type="file"
+                    class="form-control form-control-lg"
+                    id="verifyFileInput"
+                    required
+                  />
+                  <div class="form-text">
+                    Upload the same file you want to verify
+                  </div>
+                </div>
+
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-search"></i> Verify Document
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hash Input Tab -->
+        <div class="tab-pane fade" id="hash" role="tabpanel">
+          <div class="card shadow-lg border-0">
+            <div class="card-body p-5">
+              <form id="verifyHashForm">
+                <div class="mb-4">
+                  <label for="hashInput" class="form-label fw-bold">
+                    <i class="fas fa-fingerprint"></i> Enter Document Hash
+                  </label>
+                  <input
+                    type="text"
+                    class="form-control form-control-lg font-monospace"
+                    id="hashInput"
+                    placeholder="Enter SHA-256 hash (64 characters)"
+                    pattern="[a-fA-F0-9]{64}"
+                    required
+                  />
+                  <div class="form-text">
+                    Enter the 64-character hexadecimal hash
+                  </div>
+                </div>
+
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-search"></i> Verify Hash
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verification Result -->
+      <div id="verificationResult" class="card mt-4" style="display: none">
+        <div class="card-body p-4">
+          <!-- Success Result -->
+          <div id="successResult" style="display: none">
+            <div class="text-center mb-4">
+              <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+              <h3 class="text-success">✓ Document Verified!</h3>
+              <p class="text-muted">This document exists on the blockchain</p>
+            </div>
+            <hr />
+            <div class="verification-details">
+              <div class="row mb-3">
+                <div class="col-md-4 fw-bold">Document Hash:</div>
+                <div class="col-md-8">
+                  <code id="verifiedHash" class="text-break"></code>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-4 fw-bold">Notarized On:</div>
+                <div class="col-md-8">
+                  <span id="notarizedDate"></span>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-4 fw-bold">Notarized By:</div>
+                <div class="col-md-8">
+                  <code id="notarizerAddress" class="text-break"></code>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-4 fw-bold">Timestamp:</div>
+                <div class="col-md-8">
+                  <span id="timestamp"></span>
+                </div>
+              </div>
+              <div class="row" id="filenameRow" style="display: none">
+                <div class="col-md-4 fw-bold">Original Filename:</div>
+                <div class="col-md-8">
+                  <span id="verifiedFilename"></span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <a
+                id="blockExplorerLink"
+                class="btn btn-outline-primary w-100"
+                target="_blank"
+              >
+                <i class="fas fa-external-link-alt"></i> View on Block Explorer
+              </a>
+            </div>
+          </div>
+
+          <!-- Failure Result -->
+          <div id="failureResult" style="display: none">
+            <div class="text-center mb-4">
+              <i class="fas fa-times-circle fa-4x text-danger mb-3"></i>
+              <h3 class="text-danger">✗ Document Not Found</h3>
+              <p class="text-muted">
+                This document has not been notarized on the blockchain
+              </p>
+            </div>
+            <hr />
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle"></i>
+              <strong>What does this mean?</strong>
+              <ul class="mb-0 mt-2">
+                <li>The document has never been notarized</li>
+                <li>The document has been modified after notarization</li>
+                <li>You may have the wrong file</li>
+              </ul>
+            </div>
+            <p class="mb-2"><strong>Computed Hash:</strong></p>
+            <code
+              id="failedHash"
+              class="d-block bg-light p-2 rounded text-break"
+            ></code>
+          </div>
+
+          <button
+            class="btn btn-primary w-100 mt-4"
+            onclick="resetVerification()"
+          >
+            <i class="fas fa-redo"></i> Verify Another Document
+          </button>
+        </div>
+      </div>
+
+      <!-- Info Card -->
+      <div class="card mt-4 bg-light border-0">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="fas fa-info-circle text-info"></i> How Verification Works
+          </h6>
+          <ul class="mb-0 small text-muted">
+            <li>Upload the same file you previously notarized</li>
+            <li>The system computes the SHA-256 hash of your file</li>
+            <li>
+              The smart contract checks if this hash exists on the blockchain
+            </li>
+            <li>If found, it shows when and by whom it was notarized</li>
+            <li>
+              Any modification to the file will change the hash and fail
+              verification
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="{{ url_for('static', filename='js/verify.js') }}"></script>
+{% endblock %}

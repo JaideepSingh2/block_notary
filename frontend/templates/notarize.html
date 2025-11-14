@@ -1,0 +1,270 @@
+{% extends "base.html" %} {% block title %}Notarize Document - Blockchain
+Notary{% endblock %} {% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Page Header -->
+      <div class="text-center mb-5">
+        <i class="fas fa-stamp fa-4x text-primary mb-3"></i>
+        <h1 class="display-5 fw-bold">Notarize Document</h1>
+        <p class="lead text-muted">
+          Upload your document to create an immutable proof of existence
+        </p>
+      </div>
+
+      <!-- Alert Messages -->
+      <div id="alertContainer"></div>
+
+      <!-- Upload Form -->
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-5">
+          <form id="notarizeForm">
+            <div class="mb-4">
+              <label for="fileInput" class="form-label fw-bold">
+                <i class="fas fa-file-upload"></i> Select Document
+              </label>
+              <input
+                type="file"
+                class="form-control form-control-lg"
+                id="fileInput"
+                required
+              />
+              <div class="form-text">
+                Supported formats: PDF, DOCX, TXT, PNG, JPG, etc. (Max 16MB)
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg"
+                id="notarizeBtn"
+              >
+                <i class="fas fa-fingerprint"></i> Compute Hash & Notarize
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Hash Display -->
+      <div id="hashDisplay" class="card mt-4" style="display: none">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="fas fa-fingerprint text-success"></i> Document Hash
+          </h5>
+          <div class="input-group mb-3">
+            <input
+              type="text"
+              class="form-control font-monospace"
+              id="documentHash"
+              readonly
+            />
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              onclick="copyHash()"
+            >
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <p class="mb-3"><strong>File:</strong> <span id="fileName"></span></p>
+          <div id="notarizeAction">
+            <button class="btn btn-success btn-lg w-100" id="confirmNotarize">
+              <i class="fas fa-stamp"></i> Confirm & Send to Blockchain
+            </button>
+            <p class="text-muted small mt-2 text-center">
+              <i class="fas fa-info-circle"></i> MetaMask will ask you to
+              confirm the transaction
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Result -->
+      <div id="transactionResult" class="card mt-4" style="display: none">
+        <div class="card-body">
+          <h5 class="card-title text-success">
+            <i class="fas fa-check-circle"></i> Document Notarized Successfully!
+          </h5>
+          <hr />
+          <div class="transaction-details">
+            <p><strong>Transaction Hash:</strong></p>
+            <div class="input-group mb-3">
+              <input
+                type="text"
+                class="form-control font-monospace"
+                id="txHash"
+                readonly
+              />
+              <a
+                class="btn btn-outline-primary"
+                id="explorerLink"
+                target="_blank"
+              >
+                <i class="fas fa-external-link-alt"></i> View on Explorer
+              </a>
+            </div>
+            <p><strong>Block Number:</strong> <span id="blockNumber"></span></p>
+            <p><strong>Gas Used:</strong> <span id="gasUsed"></span></p>
+          </div>
+          <button class="btn btn-primary w-100 mt-3" onclick="resetForm()">
+            <i class="fas fa-plus"></i> Notarize Another Document
+          </button>
+        </div>
+      </div>
+
+      <!-- How It Works -->
+      <div class="card mt-4 bg-light border-0">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="fas fa-info-circle text-info"></i> How Notarization Works
+          </h6>
+          <ol class="mb-0 small text-muted">
+            <li>
+              Your document is hashed locally (SHA-256) - the file never leaves
+              your device
+            </li>
+            <li>The hash is sent to the smart contract on the blockchain</li>
+            <li>MetaMask requests your signature to confirm the transaction</li>
+            <li>
+              Once confirmed, the hash is permanently stored with a timestamp
+            </li>
+            <li>
+              You can verify the document anytime using the verification page
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  let currentHash = "";
+  let currentFileName = "";
+
+  // Form submission
+  document
+    .getElementById("notarizeForm")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
+
+      if (!file) {
+        showAlert("Please select a file", "warning");
+        return;
+      }
+
+      showLoading("Computing hash...");
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/compute-hash", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        hideLoading();
+
+        if (data.success) {
+          currentHash = data.hash;
+          currentFileName = data.filename;
+
+          document.getElementById("documentHash").value = currentHash;
+          document.getElementById("fileName").textContent = currentFileName;
+          document.getElementById("hashDisplay").style.display = "block";
+
+          if (data.already_notarized) {
+            showAlert("⚠️ This document is already notarized!", "warning");
+            document.getElementById("notarizeAction").style.display = "none";
+          }
+        } else {
+          showAlert(data.error, "danger");
+        }
+      } catch (error) {
+        hideLoading();
+        showAlert("Error: " + error.message, "danger");
+      }
+    });
+
+  // Confirm notarization
+  document
+    .getElementById("confirmNotarize")
+    .addEventListener("click", async () => {
+      if (!window.ethereum) {
+        showAlert("MetaMask not detected. Please install MetaMask.", "danger");
+        return;
+      }
+
+      showLoading("Sending transaction...");
+
+      try {
+        const result = await notarizeWithMetaMask(currentHash);
+
+        hideLoading();
+
+        if (result.success) {
+          document.getElementById("hashDisplay").style.display = "none";
+          document.getElementById("transactionResult").style.display = "block";
+          document.getElementById("txHash").value = result.transactionHash;
+          document.getElementById("blockNumber").textContent =
+            result.blockNumber;
+          document.getElementById("gasUsed").textContent = result.gasUsed;
+          document.getElementById("explorerLink").href = result.explorerUrl;
+
+          showAlert("Document notarized successfully!", "success");
+        } else {
+          showAlert(result.error, "danger");
+        }
+      } catch (error) {
+        hideLoading();
+        showAlert("Transaction failed: " + error.message, "danger");
+      }
+    });
+
+  function copyHash() {
+    const hashInput = document.getElementById("documentHash");
+    hashInput.select();
+    document.execCommand("copy");
+    showAlert("Hash copied to clipboard!", "info");
+  }
+
+  function resetForm() {
+    document.getElementById("notarizeForm").reset();
+    document.getElementById("hashDisplay").style.display = "none";
+    document.getElementById("transactionResult").style.display = "none";
+    currentHash = "";
+    currentFileName = "";
+  }
+
+  function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    document.getElementById("alertContainer").innerHTML = alertHtml;
+  }
+
+  function showLoading(message) {
+    const loadingHtml = `
+        <div class="alert alert-info">
+            <span class="spinner-border spinner-border-sm me-2"></span> ${message}
+        </div>
+    `;
+    document.getElementById("alertContainer").innerHTML = loadingHtml;
+  }
+
+  function hideLoading() {
+    document.getElementById("alertContainer").innerHTML = "";
+  }
+</script>
+{% endblock %}
