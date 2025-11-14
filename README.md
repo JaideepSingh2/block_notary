@@ -20,7 +20,7 @@ A decentralized application (DApp) for notarizing and verifying documents using 
 
 ```
 ┌──────────────┐         ┌──────────────┐         ┌──────────────┐
-│   Frontend   │────────▶│   Backend    │────────▶│  Blockchain  │
+│   Frontend   │───────▶│   Backend    │───────▶│  Blockchain  │
 │  (HTML/JS)   │         │   (Flask)    │         │  (Solidity)  │
 └──────────────┘         └──────────────┘         └──────────────┘
      │                         │                         │
@@ -164,7 +164,8 @@ MIT License
 
 ## 👥 Contributors
 
-- Your Name - [GitHub](https://github.com/yourusername)
+- Jaideep Singh - [GitHub](https://github.com/JaideepSingh2)
+- Akshit Baliyan - [GitHub](https://github.com/AkshitBaliyan)
 
 ## 🙏 Acknowledgments
 
