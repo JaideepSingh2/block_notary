@@ -1,0 +1,668 @@
+
+
+# 🚀 **FULL PROJECT STRUCTURE (Python + Flask + web3.py + MetaMask)**
+
+```
+notary-dapp/
+│
+├── backend/
+│   ├── app.py
+│   ├── config.py
+│   ├── contract.py
+│   ├── utils.py
+│   ├── requirements.txt
+│   ├── .env
+│   ├── instance/
+│   │   └── secret_key.txt
+│   └── __init__.py
+│
+├── frontend/
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   ├── js/
+│   │   │   ├── metamask.js
+│   │   │   └── verify.js
+│   │   └── images/
+│   └── templates/
+│       ├── index.html
+│       ├── notarize.html
+│       └── verify.html
+│
+├── blockchain/
+│   ├── Notary.sol
+│   ├── hardhat.config.js
+│   ├── scripts/
+│   │   ├── deploy.js
+│   │   └── interact.js
+│   ├── artifacts/       ← Generated after compile
+│   └── README.md
+│
+├── docs/
+│   ├── architecture-diagram.png
+│   ├── workflow-diagram.png
+│   └── report.docx
+│
+├── README.md
+└── .gitignore
+```
+
+---
+
+# 📌 **EXPLANATION OF EVERY FOLDER**
+
+---
+
+# 1️⃣ **backend/** — Core Flask App + Blockchain Connection
+
+### **app.py (main Flask file)**
+
+Contains routes:
+
+* `/` – homepage
+* `/notarize` – notarization page
+* `/verify` – verification page
+* API endpoints:
+
+  * `/api/notarize`
+  * `/api/verify`
+
+### **config.py**
+
+Stores:
+
+* RPC URL (Infura/Alchemy)
+* Contract address
+* Load ABI
+* Flask settings
+
+### **contract.py**
+
+Handles blockchain interactions using **web3.py**:
+
+* Connect to RPC
+* Load ABI + contract address
+* Functions:
+
+  * `store_hash()`
+  * `verify_hash()`
+
+### **utils.py**
+
+General helpers:
+
+* Hashing document → SHA256
+* File reading
+* Error handling wrappers
+
+### **.env (ignored in GitHub)**
+
+Contains:
+
+```
+RPC_URL=
+PRIVATE_KEY=
+CONTRACT_ADDRESS=
+```
+
+### **requirements.txt**
+
+Dependencies:
+
+```
+Flask
+web3
+python-dotenv
+gunicorn
+```
+
+---
+
+# 2️⃣ **frontend/** — HTML Templates, CSS, JavaScript
+
+### **templates/index.html**
+
+Landing page
+Buttons:
+
+* “Notarize Document”
+* “Verify Document”
+
+### **templates/notarize.html**
+
+Upload file → Flask hashes it → MetaMask signs → sends tx to blockchain.
+
+### **templates/verify.html**
+
+User enters file or hash → backend verifies via contract.
+
+### **static/js/metamask.js**
+
+Handles:
+
+* Connect wallet
+* Get current address
+* Ask for transaction signing
+
+### **static/js/verify.js**
+
+AJAX request to `/api/verify`
+
+### **static/css/style.css**
+
+Your design.
+
+---
+
+# 3️⃣ **blockchain/** — Hardhat Smart Contract Workspace
+
+### **Notary.sol**
+
+Basic contract:
+
+```solidity
+mapping(bytes32 => uint256) public timestamps;
+
+function storeHash(bytes32 hash) public {
+    require(timestamps[hash] == 0, "Already exists");
+    timestamps[hash] = block.timestamp;
+}
+
+function verifyHash(bytes32 hash) public view returns (uint256) {
+    return timestamps[hash];
+}
+```
+
+### **scripts/deploy.js**
+
+Deploys contract → saves address.
+
+### **artifacts/**
+
+Contains ABI after compilation.
+
+### **hardhat.config.js**
+
+RPC network config:
+
+* Sepolia
+* Mumbai
+
+---
+
+# 4️⃣ **docs/** — Academic Report + Diagrams
+
+Includes:
+
+* Architecture Diagram
+* UML workflow
+* Screenshots
+* Final report
+
+---
+
+# 5️⃣ **README.md**
+
+For GitHub:
+
+* Summary
+* Features
+* Screenshots
+* How to run project
+* Deployment instructions
+
+---
+
+# 🧱 **DETAILED BACKEND FLOW (VERY IMPORTANT)**
+
+## **When user notarizes a file:**
+
+```
+File upload → backend hashes file (SHA256)
+↓
+Hash sent to frontend JS
+↓
+MetaMask pops up → user pays gas → transaction sent
+↓
+Blockchain stores hash and timestamp
+↓
+Frontend shows "Notarized Successfully"
+```
+
+---
+
+## **When user verifies a file:**
+
+```
+File upload → backend hashes file
+↓
+Hash sent to blockchain via contract.verifyHash()
+↓
+If timestamp > 0 → document was notarized
+Else → not notarized
+```
+
+---
+
+# 🔧 **KEY FILES (OUTLINE)**
+
+---
+
+### ✔️ backend/app.py (outline)
+
+```python
+from flask import Flask, render_template, request, jsonify
+from contract import store_hash, verify_hash
+from utils import compute_sha256
+import os
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/notarize")
+def notarize_page():
+    return render_template("notarize.html")
+
+@app.route("/verify")
+def verify_page():
+    return render_template("verify.html")
+
+@app.route("/api/notarize", methods=["POST"])
+def api_notarize():
+    file = request.files["file"]
+    doc_hash = compute_sha256(file)
+    return jsonify({"hash": doc_hash})
+
+@app.route("/api/verify", methods=["POST"])
+def api_verify():
+    file = request.files["file"]
+    doc_hash = compute_sha256(file)
+    timestamp = verify_hash(doc_hash)
+    return jsonify({"timestamp": timestamp})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+---
+
+### ✔️ backend/contract.py (outline)
+
+```python
+from web3 import Web3
+import json, os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+w3 = Web3(Web3.HTTPProvider(os.getenv("RPC_URL")))
+
+contract_address = os.getenv("CONTRACT_ADDRESS")
+abi = json.load(open("path/to/abi.json"))
+contract = w3.eth.contract(address=contract_address, abi=abi)
+
+def verify_hash(hash_hex):
+    return contract.functions.verifyHash(hash_hex).call()
+```
+
+---
+
+
+
+
+
+# 🧾 **PROJECT TITLE: Blockchain-Based Document Notarization System (Python + Flask + Solidity)**
+
+---
+
+# 🌟 **What the Project Does (High-Level Overview)**
+
+This project allows a user to:
+
+### ✔️ **Notarize a document**
+
+* The user uploads a file (PDF, image, text, etc.)
+* The system computes its **SHA-256 hash**
+* MetaMask signs a blockchain transaction
+* The hash is stored permanently on the blockchain through a **smart contract**
+* The blockchain records:
+
+  * File hash
+  * Timestamp
+  * Wallet address
+
+This creates a **tamper-proof certificate of existence** for the document.
+
+---
+
+### ✔️ **Verify a document**
+
+* User uploads the document again OR enters the hash manually
+* The system computes its SHA-256 hash
+* Smart contract checks whether this hash exists on blockchain
+* If found → displays timestamp of notarization
+* If not found → document is not notarized
+
+---
+
+### 🎯 **Main Purpose**
+
+The system ensures:
+
+* Document authenticity
+* Timestamp proof
+* Tamper-resistance
+* Public verification
+
+All using **public blockchain**, where data cannot be modified or deleted.
+
+---
+
+# 🧱 **How the Entire System Works Internally**
+
+This project works by combining **three technologies**:
+
+---
+
+## 1️⃣ **Smart Contract (Solidity on Ethereum Testnet)**
+
+This is the core logic deployed on blockchain.
+
+It stores:
+
+```
+Hash → Timestamp
+```
+
+It is public and verifiable by anyone.
+
+### Functions:
+
+**storeHash(hash)**
+Stores file hash if not already stored.
+
+**verifyHash(hash)**
+Fetches timestamp of existing hash.
+
+Blockchain ensures:
+
+* Immutable data
+* Transparency
+* No central control
+
+---
+
+## 2️⃣ **Backend (Python Flask)**
+
+Acts as the bridge between:
+
+* User interface
+* File hashing
+* Smart contract
+* Blockchain RPC endpoint
+
+Backend responsibilities:
+
+### 🔹 Hash documents
+
+Compute SHA-256 hash → unique fingerprint.
+
+### 🔹 Provide APIs
+
+* `/api/notarize` → compute hash and send to frontend
+* `/api/verify` → compute hash and check blockchain
+
+### 🔹 Connect to Ethereum
+
+Uses **web3.py** to communicate with deployed contract.
+
+---
+
+## 3️⃣ **Frontend (HTML + CSS + JavaScript + MetaMask)**
+
+This is what the user sees.
+
+Responsibilities:
+
+### 🔹 Upload files
+
+User selects file → sent to Flask → hash generated.
+
+### 🔹 Connect MetaMask
+
+User signs and pays gas to store hash.
+
+### 🔹 Call blockchain
+
+Upload → Hash → Transaction → Success message.
+
+
+# 📂 **1. backend/**
+
+This folder contains the Python server logic.
+
+---
+
+## **📌 app.py (Main Flask Application)**
+
+Controls the pages and API routes.
+
+### Responsibilities:
+
+* Define routes:
+
+  * `/` → homepage
+  * `/notarize`
+  * `/verify`
+* Provide API endpoints:
+
+  * `/api/notarize`
+  * `/api/verify`
+* Render HTML templates
+
+This is the central controller of your system.
+
+---
+
+## **📌 config.py**
+
+Stores configuration:
+
+* RPC URL (Alchemy/Infura)
+* Contract address
+* Load ABI from artifacts
+* Flask settings
+
+Helps avoid hardcoding.
+
+---
+
+## **📌 contract.py**
+
+Connects Python to the blockchain.
+
+### Does:
+
+* Load ABI
+* Create Web3 instance
+* Load contract
+* Expose functions:
+
+  * `store_hash()`
+  * `verify_hash()`
+
+This is your backend’s blockchain interface.
+
+---
+
+## **📌 utils.py**
+
+Utility functions.
+
+### Most Important:
+
+* **compute_sha256(file)** → hashes the file
+  Hash acts as **document fingerprint**.
+
+---
+
+## **📌 .env**
+
+Contains private, sensitive values:
+
+```
+RPC_URL="https://eth-sepolia.g.alchemy.com/v2/...."
+PRIVATE_KEY="your_private_key"
+CONTRACT_ADDRESS="0xABC..."
+```
+
+NEVER upload this to GitHub.
+
+---
+
+## **📌 requirements.txt**
+
+Dependencies for backend:
+
+```
+Flask
+web3
+python-dotenv
+gunicorn
+```
+
+---
+
+# 📂 **2. frontend/**
+
+User interface.
+
+---
+
+## **📌 templates/index.html**
+
+Homepage with 2 buttons:
+
+* Notarize
+* Verify
+
+---
+
+## **📌 templates/notarize.html**
+
+Page for uploading file for notarization.
+
+Process:
+
+1. Upload file
+2. Flask hashes file
+3. Hash sent to browser
+4. JavaScript triggers MetaMask
+5. MetaMask sends transaction
+
+---
+
+## **📌 templates/verify.html**
+
+Page for checking if document hash exists.
+
+---
+
+## **📌 static/js/metamask.js**
+
+JavaScript for:
+
+* Connecting to MetaMask
+* Sending transaction to smart contract
+* Handling user wallet
+
+---
+
+## **📌 static/css/style.css**
+
+Contains styling.
+
+---
+
+# 📂 **3. blockchain/**
+
+Everything related to Solidity + Hardhat.
+
+---
+
+## **📌 Notary.sol**
+
+Smart contract storing:
+
+* mappings
+* timestamps
+
+---
+
+## **📌 hardhat.config.js**
+
+Configures networks:
+
+* Sepolia
+* Mumbai
+
+---
+
+## **📌 scripts/deploy.js**
+
+Deploys your contract and prints address.
+
+---
+
+## **📌 artifacts/**
+
+Contains ABI → required by web3.py to interact.
+
+---
+
+# 📂 **4. docs/**
+
+Contains report, diagrams, screenshots.
+
+Ideal for your college submission.
+
+---
+
+# 📂 **5. README.md**
+
+GitHub documentation.
+
+Explains:
+
+* Setup
+* Features
+* How to run
+* Architecture
+
+---
+
+# 🎯 **COMPLETE END-TO-END SYSTEM WORKFLOW**
+
+### **1️⃣ User chooses “Notarize Document”**
+
+→ Uploads file to Flask backend
+→ Backend computes SHA-256 hash
+→ Frontend receives hash
+→ MetaMask opens, asks user to confirm transaction
+→ Hash stored on blockchain
+→ System shows “Document notarized successfully”
+
+---
+
+### **2️⃣ User chooses “Verify Document”**
+
+→ Uploads file again
+→ Backend computes hash
+→ Smart contract checks timestamp
+→ If timestamp exists → document is original
+→ Else → fake/altered/not notarized
+
+
