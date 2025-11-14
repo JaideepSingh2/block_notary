@@ -6,6 +6,7 @@ __pycache__/
 **/*.venv
 **/secret_key.txt
 **/instance
+**/project_structure.txt
 # C extensions
 *.so
 
