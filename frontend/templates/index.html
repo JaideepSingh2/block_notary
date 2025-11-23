@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Document Notarization</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Blockchain Document Notarization</h1>
+            <p class="subtitle">Secure, Immutable, Transparent Document Verification</p>
+        </header>
+
+        <main class="home-content">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="icon">📝</div>
+                    <h2>Notarize</h2>
+                    <p>Upload your document and create a tamper-proof timestamp on the blockchain.</p>
+                    <a href="/notarize" class="btn btn-primary">Notarize Document</a>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon">✅</div>
+                    <h2>Verify</h2>
+                    <p>Check if a document has been notarized and view its timestamp.</p>
+                    <a href="/verify" class="btn btn-secondary">Verify Document</a>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>How It Works</h3>
+                <div class="steps">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <div class="step-content">
+                            <h4>Upload Document</h4>
+                            <p>Select any file (PDF, image, text, etc.)</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <div class="step-content">
+                            <h4>Generate Hash</h4>
+                            <p>System creates unique SHA-256 fingerprint</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <div class="step-content">
+                            <h4>Blockchain Storage</h4>
+                            <p>Hash stored permanently on Ethereum</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">4</span>
+                        <div class="step-content">
+                            <h4>Verification</h4>
+                            <p>Anyone can verify document authenticity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="benefits">
+                <h3>Why Blockchain Notarization?</h3>
+                <ul>
+                    <li>✓ <strong>Immutable:</strong> Records cannot be altered or deleted</li>
+                    <li>✓ <strong>Transparent:</strong> Publicly verifiable on blockchain</li>
+                    <li>✓ <strong>Timestamped:</strong> Proof of existence at specific time</li>
+                    <li>✓ <strong>Decentralized:</strong> No single point of failure</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Blockchain Document Notarization | Built with Flask & Web3</p>
+        </footer>
+    </div>
+</body>
+</html>

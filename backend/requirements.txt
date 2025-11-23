@@ -1,0 +1,6 @@
+Flask
+web3
+python-dotenv
+gunicorn
+Werkzeug
+setuptools

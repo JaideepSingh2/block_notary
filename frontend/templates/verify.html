@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Document - Blockchain Notary</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✅ Verify Document</h1>
+            <nav>
+                <a href="/" class="nav-link">← Back to Home</a>
+                <a href="/notarize" class="nav-link">Notarize Document</a>
+            </nav>
+        </header>
+
+        <main class="verify-content">
+            <div class="card">
+                <h2>Upload Document to Verify</h2>
+                <p>Upload the document to check if it has been notarized on the blockchain.</p>
+                
+                <form id="verifyForm" enctype="multipart/form-data">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" name="file" required>
+                        <label for="fileInput" class="file-label">
+                            <span class="file-icon">📁</span>
+                            <span id="fileLabel">Choose a file to verify...</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verify Document</button>
+                </form>
+
+                <div id="processingSection" class="section hidden">
+                    <div class="loader"></div>
+                    <p>Checking blockchain...</p>
+                </div>
+
+                <div id="resultSection" class="section hidden">
+                    <div id="resultContent"></div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>ℹ️ About Verification</h3>
+                <ul>
+                    <li>No wallet connection required for verification</li>
+                    <li>System computes document hash and checks blockchain</li>
+                    <li>If found, displays notarization timestamp</li>
+                    <li>Verification is instant and free</li>
+                    <li>Even small changes in document will result in different hash</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Blockchain Document Notarization</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/verify.js') }}"></script>
+</body>
+</html>
