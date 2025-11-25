@@ -1,9 +1,9 @@
 {
   "sepolia": {
     "network": "sepolia",
-    "contractAddress": "0xF54B483BfF19b8c825CBB1221C797B833F4b6033",
+    "contractAddress": "0xDA854859f390C7d7Da32C7ed45aAB44CEB664Aec",
     "deployer": "0x83d6970B2207fE9A0f2bD2F8923195320Aa435c9",
-    "deploymentTime": "2025-11-23T14:38:25.375Z",
-    "blockNumber": 9690397
+    "deploymentTime": "2025-11-25T13:31:36.813Z",
+    "blockNumber": 9704059
   }
 }

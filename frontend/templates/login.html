@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Blockchain Notary</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🔑 Login to Notary System</h1>
+        <nav>
+          <a href="/" class="nav-link">← Back to Home</a>
+        </nav>
+      </header>
+
+      <main class="card">
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+        <form method="POST" action="{{ url_for('login') }}">
+          <div class="form-group">
+            <label for="aadhaar">Aadhaar Number</label>
+            <input
+              type="text"
+              id="aadhaar"
+              name="aadhaar"
+              required
+              maxlength="12"
+              minlength="12"
+              placeholder="Enter your 12-digit Aadhaar"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Send OTP</button>
+        </form>
+        <p class="info-text">
+          Access is restricted. Your Aadhaar and email are pre-registered by the
+          administrator. There is no sign-up option.
+        </p>
+      </main>
+
+      <footer>
+        <p>&copy; 2024 Blockchain Document Notarization</p>
+      </footer>
+    </div>
+  </body>
+</html>

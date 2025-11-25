@@ -1,73 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Notarize Document - Blockchain Notary</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>📝 Notarize Document</h1>
-            <nav>
-                <a href="/" class="nav-link">← Back to Home</a>
-                <a href="/verify" class="nav-link">Verify Document</a>
-            </nav>
-        </header>
+      <header>
+        <h1>📝 Notarize Document</h1>
+        <nav class="user-nav">
+          <a href="/" class="nav-link">← Home</a>
+          <a href="/verify" class="nav-link">Verify Document</a>
+          <span class="user-info">👤 {{ user_name }}</span>
+          <form
+            action="{{ url_for('logout') }}"
+            method="POST"
+            style="display: inline"
+          >
+            <button type="submit" class="btn btn-logout">Logout</button>
+          </form>
+        </nav>
+      </header>
 
-        <main class="notarize-content">
-            <div class="card">
-                <div id="walletSection" class="section">
-                    <h2>Step 1: Connect Wallet</h2>
-                    <p>Connect your MetaMask wallet to sign the transaction.</p>
-                    <button id="connectWallet" class="btn btn-primary">Connect MetaMask</button>
-                    <div id="walletInfo" class="wallet-info hidden">
-                        <p>✓ Connected: <span id="walletAddress"></span></p>
-                    </div>
-                </div>
-
-                <div id="uploadSection" class="section hidden">
-                    <h2>Step 2: Upload Document</h2>
-                    <form id="notarizeForm" enctype="multipart/form-data">
-                        <div class="file-input-wrapper">
-                            <input type="file" id="fileInput" name="file" required>
-                            <label for="fileInput" class="file-label">
-                                <span class="file-icon">📁</span>
-                                <span id="fileLabel">Choose a file...</span>
-                            </label>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Notarize Document</button>
-                    </form>
-                </div>
-
-                <div id="processingSection" class="section hidden">
-                    <div class="loader"></div>
-                    <p id="processingMessage">Processing...</p>
-                </div>
-
-                <div id="resultSection" class="section hidden">
-                    <div id="resultContent"></div>
-                </div>
+      <main class="notarize-content">
+        <div class="card">
+          <div id="walletSection" class="section">
+            <h2>Step 1: Connect Wallet</h2>
+            <p>Connect your MetaMask wallet to sign the transaction.</p>
+            <button id="connectWallet" class="btn btn-primary">
+              Connect MetaMask
+            </button>
+            <div id="walletInfo" class="wallet-info hidden">
+              <p>✓ Connected: <span id="walletAddress"></span></p>
             </div>
+          </div>
 
-            <div class="info-box">
-                <h3>ℹ️ Important Information</h3>
-                <ul>
-                    <li>Make sure MetaMask is installed and unlocked</li>
-                    <li>You'll need some test ETH for gas fees (Sepolia testnet)</li>
-                    <li>The document hash (not the file) is stored on blockchain</li>
-                    <li>Transaction is permanent and cannot be reversed</li>
-                    <li>Maximum file size: 16MB</li>
-                </ul>
-            </div>
-        </main>
+          <div id="uploadSection" class="section hidden">
+            <h2>Step 2: Upload Document</h2>
+            <form id="notarizeForm" enctype="multipart/form-data">
+              <div class="file-input-wrapper">
+                <input type="file" id="fileInput" name="file" required />
+                <label for="fileInput" class="file-label">
+                  <span class="file-icon">📁</span>
+                  <span id="fileLabel">Choose a file...</span>
+                </label>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                Notarize Document
+              </button>
+            </form>
+          </div>
 
-        <footer>
-            <p>&copy; 2024 Blockchain Document Notarization</p>
-        </footer>
+          <div id="processingSection" class="section hidden">
+            <div class="loader"></div>
+            <p id="processingMessage">Processing...</p>
+          </div>
+
+          <div id="resultSection" class="section hidden">
+            <div id="resultContent"></div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h3>ℹ️ Important Information</h3>
+          <ul>
+            <li>Make sure MetaMask is installed and unlocked</li>
+            <li>You'll need some test ETH for gas fees (Sepolia testnet)</li>
+            <li>The document hash (not the file) is stored on blockchain</li>
+            <li>Transaction is permanent and cannot be reversed</li>
+            <li>Maximum file size: 16MB</li>
+          </ul>
+        </div>
+      </main>
+
+      <footer>
+        <p>&copy; 2024 Blockchain Document Notarization</p>
+      </footer>
     </div>
 
     <script src="{{ url_for('static', filename='js/metamask.js') }}"></script>
-</body>
+  </body>
 </html>

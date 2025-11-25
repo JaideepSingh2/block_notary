@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 
 from config import Config
 from contract import blockchain
-from utils import compute_sha256
+from utils import compute_sha256, generate_otp, send_otp_email
 
 # Initialize Flask app
 app = Flask(__name__, 
@@ -13,24 +13,100 @@ app = Flask(__name__,
             static_folder='../frontend/static')
 app.config.from_object(Config)
 
+
+# ===== IN-MEMORY USER STORE (for demo) =====
+
+# In a real system this would be in a database.
+# Keys are Aadhaar numbers (as strings); values contain email and name.
+REGISTERED_USERS = {
+    "123412341234": {"email": "js452@snu.edu.in", "name": "Jaideep Singh"},
+    "123456789012": {"email": "ab363@snu.edu.in", "name": "Ballu"},
+}
+
+
 # ===== ROUTES =====
 
 @app.route("/")
 def home():
-    """Homepage with navigation"""
-    return render_template("index.html")
+    """Homepage - redirect to login if not authenticated"""
+    if not session.get("is_authenticated"):
+        return redirect(url_for("login"))
+    aadhaar = session.get("user_aadhaar")
+    user = REGISTERED_USERS.get(aadhaar, {})
+    return render_template("index.html", user_name=user.get("name", aadhaar), user_aadhaar=aadhaar)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Login page using Aadhaar and email OTP."""
+    if request.method == "GET":
+        return render_template("login.html")
+
+    data = request.form
+    aadhaar = (data.get("aadhaar") or "").strip()
+
+    if not aadhaar:
+        return render_template("login.html", error="Aadhaar number is required")
+
+    user = REGISTERED_USERS.get(aadhaar)
+    if not user:
+        return render_template("login.html", error="User not found. Please contact administrator.")
+
+    otp = generate_otp()
+    session["pending_aadhaar"] = aadhaar
+    session["pending_otp"] = otp
+
+    send_otp_email(user["email"], otp)
+
+    return render_template("verify_otp.html", aadhaar=aadhaar, info="OTP has been sent to your registered email.")
+
+
+@app.route("/verify-otp", methods=["POST"])
+def verify_otp():
+    """Verify submitted OTP and create logged-in session."""
+    submitted_otp = (request.form.get("otp") or "").strip()
+    aadhaar = session.get("pending_aadhaar")
+    expected_otp = session.get("pending_otp")
+
+    if not aadhaar or not expected_otp:
+        return redirect(url_for("login"))
+
+    if submitted_otp != expected_otp:
+        return render_template("verify_otp.html", aadhaar=aadhaar, error="Invalid OTP. Please try again.")
+
+    # OTP valid: establish logged-in session
+    session.pop("pending_otp", None)
+    session["user_aadhaar"] = aadhaar
+    session["is_authenticated"] = True
+
+    return redirect(url_for("home"))
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    """Log out the current user."""
+    session.clear()
+    return redirect(url_for("home"))
 
 
 @app.route("/notarize")
 def notarize_page():
     """Document notarization page"""
-    return render_template("notarize.html")
+    if not session.get("is_authenticated"):
+        return redirect(url_for("login"))
+    aadhaar = session.get("user_aadhaar")
+    user = REGISTERED_USERS.get(aadhaar, {})
+    return render_template("notarize.html", user_name=user.get("name", aadhaar), user_aadhaar=aadhaar)
 
 
 @app.route("/verify")
 def verify_page():
     """Document verification page"""
-    return render_template("verify.html")
+    if not session.get("is_authenticated"):
+        return redirect(url_for("login"))
+    aadhaar = session.get("user_aadhaar")
+    user = REGISTERED_USERS.get(aadhaar, {})
+    return render_template("verify.html", user_name=user.get("name", aadhaar), user_aadhaar=aadhaar)
 
 
 # ===== API ENDPOINTS =====
@@ -42,6 +118,8 @@ def api_notarize():
     Frontend will use MetaMask to submit transaction.
     """
     try:
+        if not session.get("is_authenticated"):
+            return jsonify({"error": "Authentication required"}), 401
         # Check if file is present
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
@@ -70,6 +148,8 @@ def api_verify():
     Verify if document hash exists on blockchain.
     """
     try:
+        if not session.get("is_authenticated"):
+            return jsonify({"error": "Authentication required"}), 401
         # Check if file is present
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
