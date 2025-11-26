@@ -110,12 +110,13 @@ async function handleNotarize(event) {
 
   // Show processing
   document.getElementById("uploadSection").classList.add("hidden");
+  document.getElementById("verificationSection")?.classList.add("hidden");
   document.getElementById("processingSection").classList.remove("hidden");
   document.getElementById("processingMessage").textContent =
-    "Computing document hash...";
+    "Verifying document signature...";
 
   try {
-    // Step 1: Send file to backend to compute hash
+    // Step 1: Send file to backend to verify and compute hash
     const formData = new FormData();
     formData.append("file", file);
     formData.append("document_type", documentType);
@@ -125,16 +126,23 @@ async function handleNotarize(event) {
       body: formData,
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error("Failed to compute hash");
+      // Handle verification failure
+      if (data.verification_failed) {
+        document.getElementById("processingSection").classList.add("hidden");
+        showVerificationError(data, file.name, documentType);
+        return;
+      }
+      throw new Error(data.error || "Failed to process document");
     }
 
-    const data = await response.json();
     const docHash = data.hash;
     const docTypeLabel = data.document_type_label;
 
     document.getElementById("processingMessage").textContent =
-      "Hash computed! Waiting for MetaMask confirmation...";
+      "✅ Signature verified! Waiting for MetaMask confirmation...";
 
     // Step 2: Send transaction via MetaMask
     await sendTransactionToBlockchain(
@@ -147,6 +155,58 @@ async function handleNotarize(event) {
     console.error("Error notarizing document:", error);
     showResult("error", "Failed to notarize document", error.message);
   }
+}
+
+// Show verification error with helpful message
+function showVerificationError(data, filename, documentType) {
+  const verificationSection = document.getElementById("verificationSection");
+  const verificationContent = document.getElementById("verificationContent");
+
+  if (!verificationSection || !verificationContent) {
+    showResult("error", "Verification Failed", data.error);
+    return;
+  }
+
+  verificationSection.classList.remove("hidden");
+
+  let helpText = "";
+  if (!data.owner_match) {
+    helpText = `
+      <p><strong>What this means:</strong> The document you uploaded was signed by a different person (different Aadhaar).</p>
+      <p><strong>How to fix:</strong></p>
+      <ul>
+        <li>Make sure you're uploading a document that YOU signed</li>
+        <li>Use the signing tool: <code>python tools/sign_document.py</code></li>
+      </ul>
+    `;
+  } else if (!data.type_match) {
+    helpText = `
+      <p><strong>What this means:</strong> The document type you selected doesn't match the type embedded in the document's signature.</p>
+      <p><strong>How to fix:</strong></p>
+      <ul>
+        <li>Select the correct document type from the dropdown</li>
+        <li>Or re-sign the document with the correct type using the signing tool</li>
+      </ul>
+    `;
+  } else {
+    helpText = `
+      <p>This document doesn't have a valid signature.</p>
+      <p>Sign your document first using: <code>python tools/sign_document.py</code></p>
+    `;
+  }
+
+  verificationContent.innerHTML = `
+    <div class="error-message">
+      <h3>❌ Document Verification Failed</h3>
+      <p style="margin-bottom: 1rem;"><strong>Error:</strong> ${data.error}</p>
+      ${helpText}
+      <div style="margin-top: 1.5rem;">
+        <button onclick="location.reload()" class="btn btn-primary">
+          Try Again
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 // Send transaction to blockchain via MetaMask

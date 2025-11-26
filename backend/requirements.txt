@@ -4,3 +4,4 @@ python-dotenv
 gunicorn
 Werkzeug
 setuptools
+PyPDF2

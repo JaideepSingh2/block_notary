@@ -7,6 +7,7 @@ from datetime import datetime
 from config import Config
 from contract import blockchain
 from utils import compute_sha256, generate_otp, send_otp_email
+from document_signer import document_signer
 
 # Initialize Flask app
 app = Flask(__name__, 
@@ -168,7 +169,7 @@ def verify_page():
 @app.route("/api/notarize", methods=["POST"])
 def api_notarize():
     """
-    Compute hash of uploaded document.
+    Compute hash of uploaded document and verify signature.
     Frontend will use MetaMask to submit transaction.
     """
     try:
@@ -180,6 +181,7 @@ def api_notarize():
         
         file = request.files['file']
         document_type = request.form.get('document_type', 'other')
+        skip_verification = request.form.get('skip_verification', 'false') == 'true'
         
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
@@ -187,18 +189,39 @@ def api_notarize():
         if document_type not in DOCUMENT_TYPES:
             return jsonify({"error": "Invalid document type"}), 400
         
+        # Read file content for verification
+        file_content = file.read()
+        file.seek(0)  # Reset for hash computation
+        
+        # Get user's Aadhaar from session
+        aadhaar = session.get("user_aadhaar")
+        
+        # Verify document signature (unless skipped for unsigned docs)
+        if not skip_verification:
+            verification_result = document_signer.verify_signature(
+                file_content=file_content,
+                expected_aadhaar=aadhaar,
+                expected_doc_type=document_type
+            )
+            
+            if not verification_result["valid"]:
+                return jsonify({
+                    "error": verification_result["error"],
+                    "verification_failed": True,
+                    "owner_match": verification_result.get("owner_match", False),
+                    "type_match": verification_result.get("type_match", False)
+                }), 400
+        
         # Compute SHA-256 hash
         doc_hash = compute_sha256(file)
-        
-        # Store user info for later saving after blockchain confirmation
-        aadhaar = session.get("user_aadhaar")
         
         return jsonify({
             "success": True,
             "hash": doc_hash,
             "filename": secure_filename(file.filename),
             "document_type": document_type,
-            "document_type_label": DOCUMENT_TYPES.get(document_type)
+            "document_type_label": DOCUMENT_TYPES.get(document_type),
+            "verified": not skip_verification
         })
         
     except Exception as e:
