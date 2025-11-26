@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.utils import secure_filename
 import os
+import json
 from datetime import datetime
 
 from config import Config
@@ -22,6 +23,56 @@ REGISTERED_USERS = {
     "123412341234": {"email": "js452@snu.edu.in", "name": "Jaideep Singh"},
     "123456789012": {"email": "ab363@snu.edu.in", "name": "Ballu"},
 }
+
+# Document types available for notarization
+DOCUMENT_TYPES = {
+    "birth_certificate": "Birth Certificate",
+    "degree_certificate": "Degree/Education Certificate", 
+    "property_deed": "Property Deed",
+    "employment_letter": "Employment Letter",
+    "legal_contract": "Legal Contract/Agreement",
+    "identity_document": "Identity Document",
+    "other": "Other Document"
+}
+
+# ===== DOCUMENT METADATA STORE =====
+# In production, use a database. For demo, using a JSON file.
+METADATA_FILE = os.path.join(os.path.dirname(__file__), 'instance', 'document_metadata.json')
+
+def load_document_metadata():
+    """Load document metadata from JSON file."""
+    if os.path.exists(METADATA_FILE):
+        try:
+            with open(METADATA_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_document_metadata(metadata):
+    """Save document metadata to JSON file."""
+    os.makedirs(os.path.dirname(METADATA_FILE), exist_ok=True)
+    with open(METADATA_FILE, 'w') as f:
+        json.dump(metadata, f, indent=2)
+
+def store_document_info(doc_hash, aadhaar, doc_type, filename):
+    """Store document metadata after blockchain notarization."""
+    metadata = load_document_metadata()
+    user = REGISTERED_USERS.get(aadhaar, {})
+    metadata[doc_hash] = {
+        "owner_aadhaar": aadhaar,
+        "owner_name": user.get("name", "Unknown"),
+        "document_type": doc_type,
+        "document_type_label": DOCUMENT_TYPES.get(doc_type, "Other Document"),
+        "filename": filename,
+        "created_at": datetime.now().isoformat()
+    }
+    save_document_metadata(metadata)
+
+def get_document_info(doc_hash):
+    """Get document metadata by hash."""
+    metadata = load_document_metadata()
+    return metadata.get(doc_hash)
 
 
 # ===== ROUTES =====
@@ -96,7 +147,10 @@ def notarize_page():
         return redirect(url_for("login"))
     aadhaar = session.get("user_aadhaar")
     user = REGISTERED_USERS.get(aadhaar, {})
-    return render_template("notarize.html", user_name=user.get("name", aadhaar), user_aadhaar=aadhaar)
+    return render_template("notarize.html", 
+                           user_name=user.get("name", aadhaar), 
+                           user_aadhaar=aadhaar,
+                           document_types=DOCUMENT_TYPES)
 
 
 @app.route("/verify")
@@ -125,17 +179,59 @@ def api_notarize():
             return jsonify({"error": "No file uploaded"}), 400
         
         file = request.files['file']
+        document_type = request.form.get('document_type', 'other')
         
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
         
+        if document_type not in DOCUMENT_TYPES:
+            return jsonify({"error": "Invalid document type"}), 400
+        
         # Compute SHA-256 hash
         doc_hash = compute_sha256(file)
+        
+        # Store user info for later saving after blockchain confirmation
+        aadhaar = session.get("user_aadhaar")
         
         return jsonify({
             "success": True,
             "hash": doc_hash,
-            "filename": secure_filename(file.filename)
+            "filename": secure_filename(file.filename),
+            "document_type": document_type,
+            "document_type_label": DOCUMENT_TYPES.get(document_type)
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/notarize/confirm", methods=["POST"])
+def api_notarize_confirm():
+    """
+    Confirm notarization after blockchain transaction is complete.
+    Stores document metadata in backend.
+    """
+    try:
+        if not session.get("is_authenticated"):
+            return jsonify({"error": "Authentication required"}), 401
+        
+        data = request.get_json()
+        doc_hash = data.get("hash")
+        document_type = data.get("document_type")
+        filename = data.get("filename")
+        tx_hash = data.get("tx_hash")
+        
+        if not doc_hash or not document_type:
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        aadhaar = session.get("user_aadhaar")
+        
+        # Store document metadata
+        store_document_info(doc_hash, aadhaar, document_type, filename)
+        
+        return jsonify({
+            "success": True,
+            "message": "Document metadata stored successfully"
         })
         
     except Exception as e:
@@ -173,14 +269,31 @@ def api_verify():
             # Convert timestamp to readable format
             notarized_date = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
             
-            return jsonify({
+            # Get document metadata
+            doc_info = get_document_info(doc_hash)
+            
+            response_data = {
                 "success": True,
                 "notarized": True,
                 "hash": doc_hash,
                 "timestamp": timestamp,
                 "date": notarized_date,
                 "message": "Document is authentic and was notarized on blockchain"
-            })
+            }
+            
+            # Add owner info if metadata exists
+            if doc_info:
+                owner_aadhaar = doc_info.get("owner_aadhaar", "")
+                response_data["document_type"] = doc_info.get("document_type_label", "Unknown")
+                response_data["owner_name"] = doc_info.get("owner_name", "Unknown")
+                response_data["owner_aadhaar_last4"] = owner_aadhaar[-4:] if len(owner_aadhaar) >= 4 else "****"
+            else:
+                # Document notarized before metadata feature was added
+                response_data["document_type"] = "Unknown (Legacy)"
+                response_data["owner_name"] = "Unknown"
+                response_data["owner_aadhaar_last4"] = "****"
+            
+            return jsonify(response_data)
         else:
             return jsonify({
                 "success": True,

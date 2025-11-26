@@ -481,6 +481,94 @@ input[type="file"] {
   border: 1px solid var(--border-color);
 }
 
+/* ===== FORM SELECT ===== */
+.form-group select,
+.form-select {
+  width: 100%;
+  padding: 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 1rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 1rem) center;
+  padding-right: 2.5rem;
+}
+
+.form-group select:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.form-group select option {
+  background: var(--bg-color);
+  color: var(--text-color);
+  padding: 0.5rem;
+}
+
+/* ===== VERIFICATION DETAILS ===== */
+.verification-details {
+  text-align: left;
+}
+
+.verification-details > p {
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
+}
+
+.detail-card {
+  background: var(--bg-color);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.detail-card h4 {
+  color: var(--primary-color);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.detail-table tr td {
+  padding: 0.5rem 0;
+  color: var(--text-color);
+}
+
+.detail-table tr td:first-child {
+  width: 45%;
+  color: var(--text-muted);
+}
+
+.detail-table tr td:last-child {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.success-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--secondary-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  margin-top: 1rem;
+  border: 1px solid var(--secondary-color);
+}
+
 /* ===== FOOTER ===== */
 footer {
   text-align: center;

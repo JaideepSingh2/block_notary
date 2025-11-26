@@ -41,8 +41,22 @@
           </div>
 
           <div id="uploadSection" class="section hidden">
-            <h2>Step 2: Upload Document</h2>
+            <h2>Step 2: Select Document Type & Upload</h2>
             <form id="notarizeForm" enctype="multipart/form-data">
+              <div class="form-group">
+                <label for="documentType">Document Type</label>
+                <select
+                  id="documentType"
+                  name="document_type"
+                  required
+                  class="form-select"
+                >
+                  <option value="">-- Select Document Type --</option>
+                  {% for key, label in document_types.items() %}
+                  <option value="{{ key }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
               <div class="file-input-wrapper">
                 <input type="file" id="fileInput" name="file" required />
                 <label for="fileInput" class="file-label">
